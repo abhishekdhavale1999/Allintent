@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intent Amplify</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color:#333333;
+            margin: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        
+
+        #main {
+            width: 80%;
+            background-color:#CCCC99;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            overflow: hidden;
+            
+        }
+        
+        
+
+        table {
+            border: 3px solid black;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            table-layout: auto;
+            border-collapse: collapse;
+            align-self: stretch;
+            
+        }
+        
+        table td.shrink {
+                       white-space:nowrap
+              }
+                        table td.expand {
+                       width: 99%
+             }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding:10px;
+        }
+
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .valid {
+            color: green;
+        }
+
+        .invalid {
+            color: red;
+        }
+
+        input[type="file"] {
+            margin-bottom: 19px;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .result-buttons {
+            margin-top: 60px;
+        
+        }
+
+        button {
+            padding: 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+        
+
+        .email-link {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .email-link:hover {
+            text-decoration: underline;
+        }
+
+        .progress-bar-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+
+        .progress-bar {
+            height: 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            display: inline-block;
+            position: relative;
+        }
+
+        .valid-progress {
+            background-color: #4caf50;
+        }
+
+        .invalid-progress {
+            background-color: #ff5252;
+        }
+
+        .total-progress {
+            background-color: #2196f3;
+        }
+
+        .progress {
+            height: 100%;
+            transition: width 1s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            margin-left: 10px;
+            display: inline-block;
+            color: #333;
+        }
+
+        .chart-container {
+            margin-top: 10px;
+        }
+
+        #myPieChart {
+            max-width: 300px;
+            margin: auto;
+        }
+
+        .popup {
+            display: none;
+            position:fixed;
+            top: 205px;;
+            left: 240px;;
+            width: 60%;
+            height: 60%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-content {
+            background:white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        
+
+        .popup-close {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #333;
+        }
+        .form{
+            position:fixed;
+        }
+        
+    </style>
+</head>
+<body>
+     
+ <div id="main" class="form">
+    <div id="logo">
+        <img src="https://prishavtechnologies.com/wp-content/uploads/2023/06/intent-amplify-logo.png">
+        <h3>Intent Amplify</h3>
+        <h1>Bulk Email Verifier</h1>
+        <input type="file" id="fileInput" accept=".csv">
+        <button onclick="verifyEmails()">Verify Emails</button>
+
+        <div class="loading" id="loadingText">Verifying emails. Please wait...</div>
+
+        <table id="resultTable" style="display:none">
+            <thead>
+                <tr>
+                   
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        
+        
+
+        <div class="result-buttons" style="display:none;">
+            <button onclick="downloadResults()">Download Results</button>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar valid-progress">
+                <div class="progress" id="validProgress"></div>
+            </div>
+            <span class="progress-label" id="validLabel"><b>Valid:</b></span>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar invalid-progress">
+                <div class="progress" id="invalidProgress"></div>
+            </div>
+            <span class="progress-label" id="invalidLabel"><b>Invalid:</b></span>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar total-progress">
+                <div class="progress" id="totalProgress"></div>
+            </div>
+            <span class="progress-label" id="totalLabel"><b>Total Email Count</b></span>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="myPieChart"></canvas>
+        </div>
+
+        <div class="popup" id="popup">
+            <div class="popup-content">
+                <p><b>Email verification process completed !</b></p>
+                <p><b>Click the top Right close button </b></p>
+                <p><b>For download or view the result.</b></p>
+                <p><h1>Thanks for choosing Intent Amplify</h1></p>
+                <div class="popup-close" onclick="closePopup()"><button>close</button></div>
+            </div>
+        </div>
+     </div>
+    
+    <script>
+        
+        const validDomains =['.com', '.net', '.org', '.edu', '.gov', '.int', '.mil', '.arpa', '.aero', '.biz', '.coop', '.info', '.museum', '.name', '.pro', '.asia', '.jobs', '.mobi', '.tel', '.travel'];
+
+        function verifyEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isValidEmail = emailRegex.test(email);
+            const roleEmails = ["info", "support", "admin","career","team","hr","help"];
+                const username = email.split('@')[0].toLowerCase();
+                if (roleEmails.includes(username)) {
+                    invalidEmails.push(email + " (Role-based email)");
+                    return;
+                }
+
+
+            if (!isValidEmail) {
+                return { valid: false, reason: 'Invalid email syntax'};
+            }
+
+            
+
+            const domain = email.split('@')[1];
+            return isValidDomain(domain);
+        }
+
+        function isValidDomain(domain) {
+            if (validDomains.some(validDomain => domain.endsWith(validDomain))) {
+                return { valid: true, reason: '' };
+            } else {
+                return { valid: false, reason: 'Invalid domain extension or Server Unable to coneect domain' };
+            }
+        }
+
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function verifyEmails() {
+            const fileInput = document.getElementById('fileInput');
+            const resultTable = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+            const loadingText = document.getElementById('loadingText');
+            const resultButtons = document.querySelector('.result-buttons');
+            const validProgressBar = document.getElementById('validProgress');
+            const invalidProgressBar = document.getElementById('invalidProgress');
+            const totalProgressBar = document.getElementById('totalProgress');
+            const validLabel = document.getElementById('validLabel');
+            const invalidLabel = document.getElementById('invalidLabel');
+            const totalLabel = document.getElementById('totalLabel');
+            const popup = document.getElementById('popup');
+
+            resultTable.innerHTML = '';
+
+            const file = fileInput.files[0];
+            if (file) {
+                loadingText.style.display = 'block';
+                validProgressBar.style.width ='0';
+                invalidProgressBar.style.width = '0%';
+                totalProgressBar.style.width = '0%';
+
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const csvContent = e.target.result;
+                    const rows = csvContent.split('\n');
+                    const totalEmails = rows.length - 1; // Exclude header row
+                    const emailVerificationTime = 10;
+                    let validCount = 0;
+                    let invalidCount = 0;
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const columns = rows[i].split(',');
+                        const email = columns[0].trim();
+
+                        const verificationResult = verifyEmail(email);
+
+                        const rowElement = document.createElement('tr');
+                        const emailCell = document.createElement('td');
+                        emailCell.textContent = email;
+                        rowElement.appendChild(emailCell);
+
+                        const statusCell = document.createElement('td');
+                        const reasonCell = document.createElement('td');
+                        const actionCell = document.createElement('td');
+
+                        if (verificationResult.valid) {
+                            validCount++;
+                            statusCell.textContent = 'Valid';
+                            statusCell.classList.add('valid');
+                        } else {
+                            invalidCount++;
+                            statusCell.textContent = 'Invalid';
+                            statusCell.classList.add('invalid');
+                            reasonCell.textContent = verificationResult.reason;
+                        }
+
+                        const emailLink = document.createElement('a');
+                        emailLink.textContent = 'View Email';
+                        emailLink.href = `mailto:${email}`;
+                        emailLink.classList.add('email-link');
+                        actionCell.appendChild(emailLink);
+
+                        rowElement.appendChild(statusCell);
+                        rowElement.appendChild(reasonCell);
+                        rowElement.appendChild(actionCell);
+                        resultTable.appendChild(rowElement);
+
+                        // Update progress bars and labels
+                        const validPercentage = ((validCount / totalEmails) * 100).toFixed(2);
+                        const invalidPercentage = ((invalidCount / totalEmails) * 100).toFixed(2);
+                        const totalPercentage = ((i / totalEmails) * 100).toFixed(2);
+
+                        validProgressBar.style.width = `${validPercentage}%`;
+                        invalidProgressBar.style.width = `${invalidPercentage}%`;
+                        totalProgressBar.style.width = `${totalPercentage}%`;
+
+                        validLabel.textContent = `Valid: ${validPercentage}%`;
+                        invalidLabel.textContent = `Invalid: ${invalidPercentage}%`;
+                        totalLabel.textContent = `Total: ${i}/${totalEmails}`;
+
+                        // Simulate a delay for each email verification
+                        await sleep(emailVerificationTime);
+                    }
+
+                    loadingText.style.display = 'none';
+                    resultTable.style.display = 'table';
+                    resultButtons.style.display = 'block';
+
+                    // Create the pie chart
+                    createPieChart(validCount, invalidCount);
+
+                    // Show popup when process is completed
+                    popup.style.display='flex';
+                };
+
+                reader.readAsText(file);
+            } else {
+                alert('Please select a CSV file.');
+            }
+        }
+
+        function downloadResults() 
+           
+            {
+            const resultTable = document.getElementById('resultTable');
+            const rows = resultTable.querySelectorAll('tbody tr');
+            let csvContent = 'Email,Status,Reason\n';
+
+            rows.forEach(row => {
+                const email = row.cells[0].textContent;
+                const status = row.cells[1].textContent;
+                const reason = row.cells[2].textContent;
+                csvContent += `${email},${status},${reason}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+
+            if (navigator.msSaveBlob) {
+                navigator.msSaveBlob(blob, 'Intent-amplify Email Verification Result.csv');
+            } else {
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Intent-amplify Email Verification Result.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+
+        function viewResults() {
+            const resultTable = document.getElementById('resultTable');
+            resultTable.style.display = 'table';
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'none';
+        }
+
+        // Chart.js logic
+        function createPieChart(validCount, invalidCount) {
+            var ctx = document.getElementById('myPieChart').getContext('2d');
+            var myPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Valid', 'Invalid'],
+                    datasets: [{
+                        data: [validCount, invalidCount],
+                        backgroundColor: ['#4caf50', '#ff5252'],
+                    }],
+                },
+            });
+        }
+      
+    </script>   
+ </body>
+</html>
